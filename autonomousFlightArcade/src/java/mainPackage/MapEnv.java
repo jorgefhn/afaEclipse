@@ -4,7 +4,6 @@ package mainPackage;
 
 import jason.environment.Environment;
 import java.util.logging.Logger;
-import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -16,92 +15,77 @@ import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 import java.io.StringReader;
 
 
 
 
-public class MapEnv extends Environment {
+public class MapEnv extends Environment implements declareLiterals {
+	
+	public JsonObject initiateLocations() {
+		// Auxiliar method to initiate array of locations (and destinies)
+		
+		Point3D d1Loc = new Point3D(0.0,0.0,0.0);
+    	Point3D d2Loc = new Point3D(0.0,0.0,0.0);
+    	JsonObjectBuilder locationsBuilder = Json.createObjectBuilder();
+    	JsonArrayBuilder drone1ArrayBuilder = Json.createArrayBuilder()
+    			.add(d1Loc.getX())
+    			.add(d1Loc.getY())
+    			.add(d1Loc.getZ());
+    	
+    	JsonArray d1locations = drone1ArrayBuilder.build();
 
+    	JsonArrayBuilder drone2ArrayBuilder = Json.createArrayBuilder()
+    			.add(d2Loc.getX())
+    			.add(d2Loc.getY())
+    			.add(d2Loc.getZ());
+    	
+    	JsonArray d2locations = drone2ArrayBuilder.build();
+    	
+    	
+    	locationsBuilder
+    		.add("drone1",d1locations)
+    		.add("drone2",d2locations);
 	
-    // Drone 1 percepts 
+    	JsonObject positions = locationsBuilder.build();
+    	
+		return positions;
+	}
 	
-	// Safezone	
-	public static final Literal sz1 = Literal.parseLiteral("safezone(drone1)");
 	
-	// Drone 1 needs charge, health ammo
-	public static final Literal nc1 = Literal.parseLiteral("needs_charge(drone1)"); 
-	public static final Literal nh1 = Literal.parseLiteral("needs_health(drone1)");
-	public static final Literal na1 = Literal.parseLiteral("needs_ammo(drone1)"); 
-
+	JsonObject locations = initiateLocations();
+	JsonObject destinies = initiateLocations();
+	static Logger logger = Logger.getLogger(MapEnv.class.getName());
+	MapModel model; // the model of the grid
 	
-	// Drone 2 percepts
 	
-	// Drone 2 needs charge, health ammo
-	public static final Literal nc2 = Literal.parseLiteral("needs_charge(drone2)"); 
-	public static final Literal nh2 = Literal.parseLiteral("needs_health(drone2)");
-	public static final Literal na2 = Literal.parseLiteral("needs_ammo(drone2)"); 
-	
-	public static final Literal sz2 = Literal.parseLiteral("safezone(drone2)");
-	
-	// Drones plans: they decide their new positions 
-	public static final Literal np1 = Literal.parseLiteral("new_position(drone1)");
-	public static final Literal np2 = Literal.parseLiteral("new_position(drone2)"); 
-	 
-	
-
-	
-	// Locations received from drone1 and drone2
-	
-	// Hashmap to store the locations
 	HashMap<String,Point3D> droneLocations = new HashMap<String,Point3D>(); 
-	public Point3D d1Loc = new Point3D(0.0,0.0,0.0);
-	public Point3D d2Loc = new Point3D(0.0,0.0,0.0);
-	
-
-	
-	// Hacemos un diccionario con los destinos hacia los que tienen que huir los drones
 	public HashMap<String,Point3D> droneDestinies = new HashMap<String,Point3D>();
 	
-	public String HashMapToString(HashMap<String, Point3D> map) {
-		StringBuilder mapAsString = new StringBuilder("{");
-		for (String key : map.keySet()) {
-			mapAsString.append(key + "=" + map.get(key) + ", ");
-		}
-			
-	// mapAsString.delete(mapAsString.length()-2, mapAsString.length()).append("}");
-		return mapAsString.toString();
-	}
-
 	
 	public class Sender extends Thread{
-		// TODO Auto-generated method stub
-		
+		// Sender method: it sends periodically the destinies of the drones
 		@Override
         public void run(){
 					
 			DatagramSocket mySocket = null;
 			try {
+				
 				mySocket = new DatagramSocket();
-				InetAddress host = InetAddress.getByName("127.0.0.1");
+				InetAddress host = InetAddress.getByName("127.0.0.1"); 
 				int port = 11000; 
 				
 				while ( true ) {
-					// casteamos hashMap a string
-					String map = HashMapToString(droneDestinies);
-					
-					System.out.println("Destinies: "+map);
-					
-					// serializamos
-					byte[] bytes = map.getBytes();
-										
-					// enviamos
-					DatagramPacket packet = new DatagramPacket(bytes, map.length(),host,port);
+					String destiniesString = destinies.toString();					
+					byte[] bytes = destiniesString.getBytes();	
+					DatagramPacket packet = new DatagramPacket(bytes, destiniesString.length(),host,port); 
 					mySocket.send(packet);
 					TimeUnit.SECONDS.sleep(2);
-				
 				}
 				
 				
@@ -125,54 +109,27 @@ public class MapEnv extends Environment {
 	}
 	
 
-    public class PortListener extends Thread{
+    public class Receiver extends Thread{
+    	// Receiver method: it periodically receives a JSON with all the information 
 	
-		public void locationRetrieve(String mensaje){
-	
-			System.out.println("Mensaje: "+mensaje);
-			
-			// Create JSON reader
-			
-			JsonReader jsonReader = Json.createReader(new StringReader(mensaje));
-			JsonObject jsonObject = jsonReader.readObject();
-			
-			jsonReader.close();
-			JsonObject drone1 = jsonObject.getJsonObject("drone1");
-			JsonObject drone2 = jsonObject.getJsonObject("drone2");
-			
-			
-			// int endIndex = mensaje.indexOf(")");			
-			d1Loc.toPoint3D(drone1.getString("position"));
-			d2Loc.toPoint3D(drone2.getString("position"));
-			
-			droneLocations.put("drone1", d1Loc);
-			droneLocations.put("drone2", d2Loc);
-
-		}
+		
         @Override
         public void run(){
         	
+			DatagramSocket mySocket = null;
+
             try {
-                DatagramSocket mySocket = new DatagramSocket(11004);
+                mySocket = new DatagramSocket(11004);
                 byte[] buffer = new byte[1024];
                 while ( true ) {
-					
-					
+						
                     DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
                     mySocket.receive(peticion);
-                    
-                    
                     String mensaje = new String(peticion.getData(),0,peticion.getLength());
-					System.out.println("Mensaje: "+mensaje);
-				    locationRetrieve(mensaje);
-					
-					
+                    updatePositions(mensaje);
 					updatePercepts();
-    					
 					TimeUnit.SECONDS.sleep(2);
 
-
-                mySocket.close();    
                 }
                 
             } catch(SocketException e) {
@@ -182,43 +139,49 @@ public class MapEnv extends Environment {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            
+            mySocket.close();    
+
         
         }
+
+		private void updatePositions(String mensaje) {
+			JsonReader jsonReader = Json.createReader(new StringReader(mensaje));
+			JsonObject jsonObject = jsonReader.readObject();
+			jsonReader.close();
+			JsonObject drone1 = jsonObject.getJsonObject("drone1");
+			JsonObject drone2 = jsonObject.getJsonObject("drone2");
+			// actualizar posiciones en locations
+			JsonObjectBuilder locationsBuilder = Json.createObjectBuilder(locations);
+			locationsBuilder.add("drone1", drone1);
+			locationsBuilder.add("drone2", drone2);
+			locations = locationsBuilder.build();
+		}
     }
    
 	
-    static Logger logger = Logger.getLogger(MapEnv.class.getName());
-
-    MapModel model; // the model of the grid
+  
 
     @Override
     public void init(String[] args) {
-		
-		droneLocations.put("drone1",d1Loc);
-		droneLocations.put("drone2",d2Loc);
-		
-		// From the beggining
-		droneDestinies.put("drone1",d1Loc);
-		droneDestinies.put("drone2",d2Loc);
 
-		// Initiate socket 
-		
-		 PortListener listener = new PortListener();
+    	JsonObject locations = initiateLocations();
+    	JsonObject destinies = initiateLocations();
+    			
+		 Receiver listener = new Receiver();
 		 listener.start();
 		 
 		 Sender sender = new Sender();
 		 sender.start();
 
-		
-		// Initiate model 
         model = new MapModel();
-
-   
 
         updatePercepts();
 
         // after updating percepts, we check them
     }
+
+	
 
     /** creates the agents percepts based on the MapModel */
     void updatePercepts() {
@@ -240,9 +203,6 @@ public class MapEnv extends Environment {
 		  
     }
 
-    // public boolean executeAction(String ag, Structure action) {
-    
-    
   
     @Override
     public boolean executeAction(String ag, Structure action ) {
@@ -250,16 +210,13 @@ public class MapEnv extends Environment {
     	
     	boolean result = true;
     	
-        System.out.println("["+ag+"] doing: "+action);
-  
-        
-		
-		
+        System.out.println("["+ag+"] doing: "+action);	
 		System.out.println(action.getFunctor());
 		
 		// decide new position 
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
 			Point3D newPos = model.getNewPosition();
+			
 			droneDestinies.put(ag,newPos);	
 			result = true;
 		}
@@ -268,20 +225,31 @@ public class MapEnv extends Environment {
 		if (action.getFunctor().equals("flee")) {
 			// aquí es donde se le envía a Unity el plan para que se mueva
 			
-			Point3D currentPos = new Point3D(0.0,0.0,0.0);
-			Point3D fleeFrom = new Point3D(0.0,0.0,0.0);
+			
+			String currentPos = "";
+			String fleeFrom = "";
+
 			
 			if (ag.equals("drone1")){ // tiene que huir del dron2
-				currentPos = droneLocations.get("drone1");
-				fleeFrom = droneLocations.get("drone2");
-			}
+				currentPos = locations.getString("drone1");
+				fleeFrom = locations.getString("drone2");
+ 			}
 			
 			if (ag.equals("drone2")){ // tiene que huir del dron2
-				currentPos = droneLocations.get("drone2");
-				fleeFrom = droneLocations.get("drone1");
+				currentPos = locations.getString("drone2");
+				fleeFrom = locations.getString("drone1");
 			}
 			
-			Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
+			
+			// create two points
+			Point3D current = new Point3D(0.0,0.0,0.0);
+			Point3D flee = new Point3D(0.0,0.0,0.0);
+
+			current.toPoint3D(currentPos);
+			flee.toPoint3D(fleeFrom);
+			
+			
+			Point3D newPos = model.getSafePosition(current,flee);
 			droneDestinies.put(ag,newPos);	
 			System.out.println("New drone destinies: "+droneDestinies);
 			
