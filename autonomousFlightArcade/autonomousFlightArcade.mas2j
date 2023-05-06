@@ -1,0 +1,13 @@
+MAS autonomousFlightArcade {
+
+	infrastructure: Centralised
+	
+	environment: mainPackage.MapEnv
+	
+	agents:
+		drone1;
+		drone2;
+
+	aslSourcePath:
+		"src/asl";
+}
