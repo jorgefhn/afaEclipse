@@ -5,6 +5,7 @@ package mainPackage;
 import jason.environment.Environment;
 import java.util.logging.Logger;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Structure;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.DatagramPacket;
@@ -14,6 +15,11 @@ import java.lang.InterruptedException;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.StringReader;
+
 
 
 
@@ -42,8 +48,8 @@ public class MapEnv extends Environment {
 	
 	// Drones plans: they decide their new positions 
 	public static final Literal np1 = Literal.parseLiteral("new_position(drone1)");
-	public static final Literal np2 = Literal.parseLiteral("new_position(drone2)");
-	
+	public static final Literal np2 = Literal.parseLiteral("new_position(drone2)"); 
+	 
 	
 
 	
@@ -122,19 +128,22 @@ public class MapEnv extends Environment {
     public class PortListener extends Thread{
 	
 		public void locationRetrieve(String mensaje){
+	
+			System.out.println("Mensaje: "+mensaje);
 			
-			// position of drone1
-			String strD1 = "drone1";
-			String strD2 = "drone2";
-			String strHP = "healthPackages";
-
-			int startIndexD1 = mensaje.indexOf(strD1); // en la "d" de "drone1"
-			int startIndexD2 = mensaje.indexOf(strD2); // en la "d" de "drone2"
-			int startIndexHP = mensaje.indexOf(strHP); // en la "h" de "healthPackage"
-
+			// Create JSON reader
+			
+			JsonReader jsonReader = Json.createReader(new StringReader(mensaje));
+			JsonObject jsonObject = jsonReader.readObject();
+			
+			jsonReader.close();
+			JsonObject drone1 = jsonObject.getJsonObject("drone1");
+			JsonObject drone2 = jsonObject.getJsonObject("drone2");
+			
+			
 			// int endIndex = mensaje.indexOf(")");			
-			d1Loc.toPoint3D(mensaje.substring((startIndexD1+strD1.length()+3),startIndexD2-3));
-			d2Loc.toPoint3D(mensaje.substring((startIndexD2+strD2.length()+3),startIndexHP-3));
+			d1Loc.toPoint3D(drone1.getString("position"));
+			d2Loc.toPoint3D(drone2.getString("position"));
 			
 			droneLocations.put("drone1", d1Loc);
 			droneLocations.put("drone2", d2Loc);
@@ -151,6 +160,7 @@ public class MapEnv extends Environment {
 					
                     DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
                     mySocket.receive(peticion);
+                    
                     
                     String mensaje = new String(peticion.getData(),0,peticion.getLength());
 					System.out.println("Mensaje: "+mensaje);
@@ -219,12 +229,10 @@ public class MapEnv extends Environment {
 		double securityDistance = droneLocations.get("drone1").distanceBetweenVectors(droneLocations.get("drone2"));
 		System.out.println("Security distance: "+securityDistance);
 		if (securityDistance > 50.0){ // if the security distance is over 50, safezone.
-			// addPercept("drone1", sz1);	
-			// addPercept("drone1", np1);	
+			addPercept("drone1", sz1);	
+			addPercept("drone1", np1);	
 			System.out.println("distance > 50");
-			
-			// addPercept("drone2", sz2); 			
-			
+					
 		}
 		
 		// Aquí faltaría lo de los cargamentos para nhealth,nammo,ncharge
@@ -235,16 +243,16 @@ public class MapEnv extends Environment {
     // public boolean executeAction(String ag, Structure action) {
     
     
-    /*
+  
     @Override
-    public boolean executeAction(String ag ) {
+    public boolean executeAction(String ag, Structure action ) {
     	
     	
-    	result = true;
-    	/*
+    	boolean result = true;
+    	
         System.out.println("["+ag+"] doing: "+action);
-        boolean result = false;
-        Location dest = null;
+  
+        
 		
 		
 		System.out.println(action.getFunctor());
@@ -285,12 +293,6 @@ public class MapEnv extends Environment {
 
 
         if (action.getFunctor().equals("move_towards")) {
-            // System.out.println("is going to move towards");
-            String l = action.getTerm(0).toString();
-            if (l.equals("health")) { // go to pick up the health package
-                dest = model.lHealth;
-            }
-
             try {
                 // result = model.moverHacia(ag,dest);
 				System.out.println("Moving towards in Unity");
@@ -312,7 +314,7 @@ public class MapEnv extends Environment {
         
        
         return result;
-    } */
+    } 
     
 	 
 	
