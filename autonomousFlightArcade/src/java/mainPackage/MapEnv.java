@@ -59,6 +59,42 @@ public class MapEnv extends Environment implements declareLiterals {
 		return positions;
 	}
 	
+	public void updateLocation(String ag, Point3D newPos) {
+		// Method that takes locations array, agent (drone1, drone2) and updates its position
+		
+		String other = ag.equals("drone1") ? ag : "drone2"; 
+		
+		JsonObjectBuilder builder = Json.createObjectBuilder();
+		
+		// Agent locations
+		JsonArrayBuilder agArrayBuilder = Json.createArrayBuilder()
+    			.add(newPos.getX())
+    			.add(newPos.getY())
+    			.add(newPos.getZ());
+    	
+    	JsonArray agLocations = agArrayBuilder.build();
+    	
+    	// Other locations
+    	String otherPosString = locations.getString(other);
+    	Point3D otherPos = vectorFromString(otherPosString);
+    	
+    	JsonArrayBuilder otherArrayBuilder = Json.createArrayBuilder()
+    			.add(otherPos.getX())
+    			.add(otherPos.getY())
+    			.add(otherPos.getZ());
+    	
+    	JsonArray otherLocations = otherArrayBuilder.build();
+    	
+    	builder.add(ag, agLocations);
+    	builder.add(other, otherLocations);
+    	
+    	locations = builder.build();
+
+    	
+		
+		
+	}
+	
 	
 	JsonObject locations = initiateLocations();
 	JsonObject destinies = initiateLocations();
@@ -174,11 +210,10 @@ public class MapEnv extends Environment implements declareLiterals {
 		 Sender sender = new Sender();
 		 sender.start();
 
-        model = new MapModel();
+         model = new MapModel();
 
-        updatePercepts();
+         updatePercepts();
 
-        // after updating percepts, we check them
     }
 
 	
@@ -225,7 +260,7 @@ public class MapEnv extends Environment implements declareLiterals {
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
 			Point3D newPos = model.getNewPosition();
 			
-			updatePosition(ag,newPos);
+			updateLocation(ag,newPos);
 			result = true;
 		}
 		
@@ -249,7 +284,7 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			
 			Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
-			updatePosition(ag,newPos);
+			updateLocation(ag,newPos);
 			System.out.println("New drone destinies: "+destinies);
 			
 			result = true;
@@ -285,41 +320,7 @@ public class MapEnv extends Environment implements declareLiterals {
 
 
 
-	public void updatePosition(String ag, Point3D newPos) {
-		// Method that takes locations array, agent (drone1, drone2) and updates its position
-		
-		String other = ag.equals("drone1") ? ag : "drone2"; 
-		
-		JsonObjectBuilder builder = Json.createObjectBuilder();
-		
-		// Agent locations
-		JsonArrayBuilder agArrayBuilder = Json.createArrayBuilder()
-    			.add(newPos.getX())
-    			.add(newPos.getY())
-    			.add(newPos.getZ());
-    	
-    	JsonArray agLocations = agArrayBuilder.build();
-    	
-    	// Other locations
-    	String otherPosString = locations.getString(other);
-    	Point3D otherPos = vectorFromString(otherPosString);
-    	
-    	JsonArrayBuilder otherArrayBuilder = Json.createArrayBuilder()
-    			.add(otherPos.getX())
-    			.add(otherPos.getY())
-    			.add(otherPos.getZ());
-    	
-    	JsonArray otherLocations = otherArrayBuilder.build();
-    	
-    	builder.add(ag, agLocations);
-    	builder.add(other, otherLocations);
-    	
-    	locations = builder.build();
-
-    	
-		
-		
-	}
+	
 
 
 
