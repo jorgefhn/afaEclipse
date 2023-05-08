@@ -13,7 +13,6 @@ import java.net.SocketException;
 import java.lang.InterruptedException;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -247,7 +246,7 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
 			updatePosition(ag,newPos);
-			System.out.println("New drone destinies: "+droneDestinies);
+			System.out.println("New drone destinies: "+destinies);
 			
 			result = true;
 			
