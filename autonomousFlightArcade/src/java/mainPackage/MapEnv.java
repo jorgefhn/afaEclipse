@@ -16,9 +16,12 @@ import java.util.concurrent.TimeUnit;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.json.JsonValue;
+
 import java.io.StringReader;
 
 
@@ -186,8 +189,9 @@ public class MapEnv extends Environment implements declareLiterals {
         clearPercepts("drone1");
         
         // drone1 and drone2 locations
-        Point3D d1pos = vectorFromString(locations.getString("drone1"));
-        Point3D d2pos = vectorFromString(locations.getString("drone2"));
+        System.out.println(locations);
+        Point3D d1pos = vectorFromString("drone1");
+        Point3D d2pos = vectorFromString("drone2");
 
 
         // After calculating the security distance, we will set a threshold of 50 to add a percept
@@ -234,13 +238,13 @@ public class MapEnv extends Environment implements declareLiterals {
 
 			
 			if (ag.equals("drone1")){ // tiene que huir del dron2
-				currentPos = vectorFromString(locations.getString("drone1"));
-				fleeFrom = vectorFromString(locations.getString("drone2"));
+				currentPos = vectorFromString("drone1");
+				fleeFrom = vectorFromString("drone2");
  			}
 			
 			if (ag.equals("drone2")){ // tiene que huir del dron2
-				currentPos = vectorFromString(locations.getString("drone2"));
-				fleeFrom = vectorFromString(locations.getString("drone1"));
+				currentPos = vectorFromString("drone2");
+				fleeFrom = vectorFromString("drone1");
 			}
 			
 			
@@ -319,10 +323,25 @@ public class MapEnv extends Environment implements declareLiterals {
 
 
 
-	public Point3D vectorFromString(String position) {
-		Point3D vector = new Point3D(0.0,0.0,0.0);
-		vector.toPoint3D(position);
+	public Point3D vectorFromString(String droneName) {
+		
+		JsonArray array = locations.getJsonArray(droneName);
+		
+		// get coordinates 
+		JsonValue vx = array.get(0);
+		JsonValue vy = array.get(1);
+		JsonValue vz = array.get(2);
+	
+		
+		// cast to double 
+		double x = ((JsonNumber)vx).doubleValue();
+		double y = ((JsonNumber)vy).doubleValue();;
+		double z = ((JsonNumber)vz).doubleValue();
+
+		Point3D vector = new Point3D(x,y,z);
 		return vector;
+
+	
 	} 
     
 	 
