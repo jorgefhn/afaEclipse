@@ -62,11 +62,7 @@ public class MapEnv extends Environment implements declareLiterals {
 	JsonObject destinies = initiateLocations();
 	static Logger logger = Logger.getLogger(MapEnv.class.getName());
 	MapModel model; // the model of the grid
-	
-	
-	HashMap<String,Point3D> droneLocations = new HashMap<String,Point3D>(); 
-	public HashMap<String,Point3D> droneDestinies = new HashMap<String,Point3D>();
-	
+		
 	
 	public class Sender extends Thread{
 		// Sender method: it sends periodically the destinies of the drones
@@ -126,7 +122,9 @@ public class MapEnv extends Environment implements declareLiterals {
                     DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
                     mySocket.receive(peticion);
                     String mensaje = new String(peticion.getData(),0,peticion.getLength());
-                    updatePositions(mensaje);
+                    
+                    
+                    updateFromUnity(mensaje);
 					updatePercepts();
 					TimeUnit.SECONDS.sleep(2);
 
@@ -145,12 +143,15 @@ public class MapEnv extends Environment implements declareLiterals {
         
         }
 
-		private void updatePositions(String mensaje) {
+		private void updateFromUnity(String mensaje) {
+			// method to update positions with a message received from Unity
+			
 			JsonReader jsonReader = Json.createReader(new StringReader(mensaje));
-			JsonObject jsonObject = jsonReader.readObject();
+			JsonObject newLocations= jsonReader.readObject();
 			jsonReader.close();
-			JsonObject drone1 = jsonObject.getJsonObject("drone1");
-			JsonObject drone2 = jsonObject.getJsonObject("drone2");
+			
+			JsonObject drone1 = newLocations.getJsonObject("drone1");
+			JsonObject drone2 = newLocations.getJsonObject("drone2");
 			// actualizar posiciones en locations
 			JsonObjectBuilder locationsBuilder = Json.createObjectBuilder(locations);
 			locationsBuilder.add("drone1", drone1);
@@ -164,9 +165,6 @@ public class MapEnv extends Environment implements declareLiterals {
 
     @Override
     public void init(String[] args) {
-
-    	JsonObject locations = initiateLocations();
-    	JsonObject destinies = initiateLocations();
     			
 		 Receiver listener = new Receiver();
 		 listener.start();
@@ -187,10 +185,17 @@ public class MapEnv extends Environment implements declareLiterals {
     void updatePercepts() {
         // clear the percepts of the agents
         clearPercepts("drone1");
+        
+        // drone1 and drone2 locations
+        Point3D d1pos = vectorFromString(locations.getString("drone1"));
+        Point3D d2pos = vectorFromString(locations.getString("drone2"));
+
 
         // After calculating the security distance, we will set a threshold of 50 to add a percept
-		double securityDistance = droneLocations.get("drone1").distanceBetweenVectors(droneLocations.get("drone2"));
+		double securityDistance = d1pos.distanceBetweenVectors(d2pos);
+		
 		System.out.println("Security distance: "+securityDistance);
+		
 		if (securityDistance > 50.0){ // if the security distance is over 50, safezone.
 			addPercept("drone1", sz1);	
 			addPercept("drone1", np1);	
@@ -217,7 +222,7 @@ public class MapEnv extends Environment implements declareLiterals {
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
 			Point3D newPos = model.getNewPosition();
 			
-			droneDestinies.put(ag,newPos);	
+			updatePosition(ag,newPos);
 			result = true;
 		}
 		
@@ -225,32 +230,23 @@ public class MapEnv extends Environment implements declareLiterals {
 		if (action.getFunctor().equals("flee")) {
 			// aquí es donde se le envía a Unity el plan para que se mueva
 			
-			
-			String currentPos = "";
-			String fleeFrom = "";
+			Point3D currentPos = null;
+			Point3D fleeFrom = null;
 
 			
 			if (ag.equals("drone1")){ // tiene que huir del dron2
-				currentPos = locations.getString("drone1");
-				fleeFrom = locations.getString("drone2");
+				currentPos = vectorFromString(locations.getString("drone1"));
+				fleeFrom = vectorFromString(locations.getString("drone2"));
  			}
 			
 			if (ag.equals("drone2")){ // tiene que huir del dron2
-				currentPos = locations.getString("drone2");
-				fleeFrom = locations.getString("drone1");
+				currentPos = vectorFromString(locations.getString("drone2"));
+				fleeFrom = vectorFromString(locations.getString("drone1"));
 			}
 			
 			
-			// create two points
-			Point3D current = new Point3D(0.0,0.0,0.0);
-			Point3D flee = new Point3D(0.0,0.0,0.0);
-
-			current.toPoint3D(currentPos);
-			flee.toPoint3D(fleeFrom);
-			
-			
-			Point3D newPos = model.getSafePosition(current,flee);
-			droneDestinies.put(ag,newPos);	
+			Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
+			updatePosition(ag,newPos);
 			System.out.println("New drone destinies: "+droneDestinies);
 			
 			result = true;
@@ -282,7 +278,53 @@ public class MapEnv extends Environment implements declareLiterals {
         
        
         return result;
-    } 
+    }
+
+
+
+	public void updatePosition(String ag, Point3D newPos) {
+		// Method that takes locations array, agent (drone1, drone2) and updates its position
+		
+		String other = ag.equals("drone1") ? ag : "drone2"; 
+		
+		JsonObjectBuilder builder = Json.createObjectBuilder();
+		
+		// Agent locations
+		JsonArrayBuilder agArrayBuilder = Json.createArrayBuilder()
+    			.add(newPos.getX())
+    			.add(newPos.getY())
+    			.add(newPos.getZ());
+    	
+    	JsonArray agLocations = agArrayBuilder.build();
+    	
+    	// Other locations
+    	String otherPosString = locations.getString(other);
+    	Point3D otherPos = vectorFromString(otherPosString);
+    	
+    	JsonArrayBuilder otherArrayBuilder = Json.createArrayBuilder()
+    			.add(otherPos.getX())
+    			.add(otherPos.getY())
+    			.add(otherPos.getZ());
+    	
+    	JsonArray otherLocations = otherArrayBuilder.build();
+    	
+    	builder.add(ag, agLocations);
+    	builder.add(other, otherLocations);
+    	
+    	locations = builder.build();
+
+    	
+		
+		
+	}
+
+
+
+	public Point3D vectorFromString(String position) {
+		Point3D vector = new Point3D(0.0,0.0,0.0);
+		vector.toPoint3D(position);
+		return vector;
+	} 
     
 	 
 	
