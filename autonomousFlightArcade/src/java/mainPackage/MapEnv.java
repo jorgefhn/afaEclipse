@@ -31,7 +31,9 @@ import java.io.StringReader;
 public class MapEnv extends Environment implements declareLiterals {
 	
 	public JsonObject initiateLocations() {
-		// Auxiliar method to initiate array of locations (and destinies)
+		// Auxiliar method to initiate array of locations (and destinies
+
+		// positions
 		
 		Point3D d1Loc = new Point3D(0.0,0.0,0.0);
     	Point3D d2Loc = new Point3D(0.0,0.0,0.0);
@@ -50,10 +52,30 @@ public class MapEnv extends Environment implements declareLiterals {
     	
     	JsonArray d2locations = drone2ArrayBuilder.build();
     	
+    	// health, ammo and charge 
+    	
+    	JsonObjectBuilder drone1builder = Json.createObjectBuilder();
+    	drone1builder
+    		.add("health",100)
+    		.add("ammo",100)
+    		.add("charge",100)
+    		.add("position",d1locations);
+    	
+    	JsonObject drone1 = drone1builder.build();
+    	
+    	JsonObjectBuilder drone2builder = Json.createObjectBuilder();
+    	drone2builder
+    		.add("health",100)
+    		.add("ammo",100)
+    		.add("charge",100)
+    		.add("position",d2locations);
+
+    	JsonObject drone2 = drone2builder.build();
+
     	
     	locationsBuilder
-    		.add("drone1",d1locations)
-    		.add("drone2",d2locations);
+    		.add("drone1",drone1)
+    		.add("drone2",drone2);
 	
     	JsonObject positions = locationsBuilder.build();
     	
@@ -86,11 +108,40 @@ public class MapEnv extends Environment implements declareLiterals {
     	
     	JsonArray otherLocations = otherArrayBuilder.build();
     	
-    	builder.add(ag, agLocations);
-    	builder.add(other, otherLocations);
+    	// get values and update them
+    	// health, ammo and charge 
     	
-    	locations = builder.build();
+    	JsonObjectBuilder droneagbuilder = Json.createObjectBuilder();
+    	
+    	JsonObject agdrone = locations.getJsonObject(ag);
+    	JsonObject otherdrone = locations.getJsonObject(other);
 
+    	droneagbuilder
+    		.add("health",agdrone.get("health"))
+    		.add("ammo",agdrone.get("ammo"))
+    		.add("charge",agdrone.get("charge"))
+    		.add("position",agLocations);
+    	
+    	JsonObject droneag = droneagbuilder.build();
+    	
+    	JsonObjectBuilder droneotherbuilder = Json.createObjectBuilder();
+    	
+    	droneotherbuilder
+    		.add("health",otherdrone.get("health"))
+    		.add("ammo",otherdrone.get("ammo"))
+    		.add("charge",otherdrone.get("charge"))
+    		.add("position",otherLocations);
+    	
+    	JsonObject droneother = droneotherbuilder.build();
+    	
+    	
+    	builder
+    		.add("drone1",droneag)
+    		.add("drone2",droneother);
+	
+    	locations = builder.build();
+    	    	
+   
     	
 		
 		
@@ -191,7 +242,56 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			JsonObject drone1 = newLocations.getJsonObject("drone1");
 			JsonObject drone2 = newLocations.getJsonObject("drone2");
-			// actualizar posiciones en locations
+			
+			// obtenemos posiciones de dron1 y dron2
+			String d1pos = drone1.getString("position");
+			String d2pos = drone2.getString("position");
+			
+			// String --> Point3D --> Array
+			
+			// String --> Point3D
+			Point3D v1 = new Point3D(0.0,0.0,0.0);
+			v1.toPoint3D(d1pos);
+			
+			Point3D v2 = new Point3D(0.0,0.0,0.0);
+			v2.toPoint3D(d2pos);
+
+			// Point3D --> array
+			JsonArrayBuilder drone1ArrayBuilder = Json.createArrayBuilder()
+	    			.add(v1.getX())
+	    			.add(v1.getY())
+	    			.add(v1.getZ());
+	    	
+	    	JsonArray d1locations = drone1ArrayBuilder.build();
+
+	    	JsonArrayBuilder drone2ArrayBuilder = Json.createArrayBuilder()
+	    			.add(v2.getX())
+	    			.add(v2.getY())
+	    			.add(v2.getZ());
+	    	
+	    	JsonArray d2locations = drone2ArrayBuilder.build();
+			
+			
+			// actualizar atributos en locations
+	    	JsonObjectBuilder drone1builder = Json.createObjectBuilder();
+	    	drone1builder
+	    		.add("position", d1locations)
+	    		.add("health", drone1.get("health"))
+	    		.add("ammo", drone1.get("ammo"))
+	    		.add("charge", drone1.get("charge"));
+	    	
+	    	JsonObjectBuilder drone2builder = Json.createObjectBuilder();
+	    	drone2builder
+	    		.add("position", d2locations)
+	    		.add("health", drone2.get("health"))
+	    		.add("ammo", drone2.get("ammo"))
+	    		.add("charge", drone2.get("charge"));
+
+	    	
+	    	drone1 = drone1builder.build();
+	    	drone2 = drone2builder.build();
+
+	    	// actualizar locations
 			JsonObjectBuilder locationsBuilder = Json.createObjectBuilder(locations);
 			locationsBuilder.add("drone1", drone1);
 			locationsBuilder.add("drone2", drone2);
@@ -328,7 +428,7 @@ public class MapEnv extends Environment implements declareLiterals {
 	public Point3D vectorFromString(String droneName) {
 		
 		JsonObject object = locations.getJsonObject(droneName);
-		JsonString array = object.getJsonString("position"); // hay que coger las posiciones (1:-1) o quitarle los paréntesis en el split
+		JsonArray array = object.getJsonArray("position"); // hay que coger las posiciones (1:-1) o quitarle los paréntesis en el split
 		
 		System.out.println("Array: "+array);
 		
