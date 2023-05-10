@@ -1,4 +1,4 @@
-package mainPackage;
+
 
 
 
@@ -16,24 +16,26 @@ import java.util.concurrent.TimeUnit;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
-import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonValue;
 
 import java.io.StringReader;
 
 
-
+  
 
 public class MapEnv extends Environment implements declareLiterals {
+
+    
+	 
 	
 	public JsonObject initiateLocations() {
 		// Auxiliar method to initiate array of locations (and destinies
+		
+		
 
-		// positions
+		// ERASE positions
 		
 		Point3D d1Loc = new Point3D(0.0,0.0,0.0);
     	Point3D d2Loc = new Point3D(0.0,0.0,0.0);
@@ -83,7 +85,11 @@ public class MapEnv extends Environment implements declareLiterals {
 	}
 	
 	public void updateLocation(String ag, Point3D newPos) {
-		// Method that takes locations array, agent (drone1, drone2) and updates its position
+		
+		
+		
+		
+		// ERASE: Method that takes locations array, agent (drone1, drone2) and updates its position
 		
 		String other = ag.equals("drone1") ? ag : "drone2"; 
 		
@@ -146,6 +152,8 @@ public class MapEnv extends Environment implements declareLiterals {
 		
 		
 	}
+	
+	gameInfo game = new gameInfo();
 	
 	
 	JsonObject locations = initiateLocations();
@@ -236,6 +244,7 @@ public class MapEnv extends Environment implements declareLiterals {
 		private void updateFromUnity(String mensaje) {
 			// method to update positions with a message received from Unity
 			
+			
 			JsonReader jsonReader = Json.createReader(new StringReader(mensaje));
 			JsonObject newLocations= jsonReader.readObject();
 			jsonReader.close();
@@ -243,18 +252,46 @@ public class MapEnv extends Environment implements declareLiterals {
 			JsonObject drone1 = newLocations.getJsonObject("drone1");
 			JsonObject drone2 = newLocations.getJsonObject("drone2");
 			
+			
 			// obtenemos posiciones de dron1 y dron2
 			String d1pos = drone1.getString("position");
 			String d2pos = drone2.getString("position");
 			
-			// String --> Point3D --> Array
-			
-			// String --> Point3D
 			Point3D v1 = new Point3D(0.0,0.0,0.0);
 			v1.toPoint3D(d1pos);
 			
 			Point3D v2 = new Point3D(0.0,0.0,0.0);
 			v2.toPoint3D(d2pos);
+			
+			game.drone1.setPosition(v1);
+			game.drone2.setPosition(v2);
+			
+			// obtenemos indicadores de salud, carga y munición de drones
+		
+			game.drone1.setHealthLevel(drone1.getString("health"));
+			game.drone1.setChargeLevel(drone1.getString("charge"));
+			game.drone1.setAmmoLevel(drone1.getString("ammo"));
+
+			game.drone2.setHealthLevel(drone2.getString("health"));
+			game.drone2.setChargeLevel(drone2.getString("charge"));
+			game.drone2.setAmmoLevel(drone2.getString("ammo"));
+			
+			// Health Packages, Ammo Packages, Charge Packages 
+
+
+
+			
+			
+			System.out.println("Game: "+game.toString());
+			
+			// ERASE 
+
+			// String --> Point3D --> Array
+			
+			// String --> Point3D
+			
+			
+			
 
 			// Point3D --> array
 			JsonArrayBuilder drone1ArrayBuilder = Json.createArrayBuilder()
@@ -304,6 +341,12 @@ public class MapEnv extends Environment implements declareLiterals {
 
     @Override
     public void init(String[] args) {
+    	
+    	game.drone1 = new droneInfo();
+    	game.drone2 = new droneInfo();
+
+    	
+    	
     			
 		 Receiver listener = new Receiver();
 		 listener.start();
@@ -361,7 +404,7 @@ public class MapEnv extends Environment implements declareLiterals {
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
 			Point3D newPos = model.getNewPosition();
 			
-			updateLocation(ag,newPos);
+			// updateLocation(ag,newPos);
 			result = true;
 		}
 		
@@ -385,7 +428,7 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			
 			Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
-			updateLocation(ag,newPos);
+			// updateLocation(ag,newPos);
 			System.out.println("New drone destinies: "+destinies);
 			
 			result = true;
