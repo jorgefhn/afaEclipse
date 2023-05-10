@@ -268,13 +268,13 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			// obtenemos indicadores de salud, carga y munición de drones
 		
-			game.drone1.setHealthLevel(drone1.getString("health"));
-			game.drone1.setChargeLevel(drone1.getString("charge"));
-			game.drone1.setAmmoLevel(drone1.getString("ammo"));
+			game.drone1.setHealthLevel(drone1.get("health"));
+			game.drone1.setChargeLevel(drone1.get("charge"));
+			game.drone1.setAmmoLevel(drone1.get("ammo"));
 
-			game.drone2.setHealthLevel(drone2.getString("health"));
-			game.drone2.setChargeLevel(drone2.getString("charge"));
-			game.drone2.setAmmoLevel(drone2.getString("ammo"));
+			game.drone2.setHealthLevel(drone2.get("health"));
+			game.drone2.setChargeLevel(drone2.get("charge"));
+			game.drone2.setAmmoLevel(drone2.get("ammo"));
 			
 			// Health Packages, Ammo Packages, Charge Packages 
 
