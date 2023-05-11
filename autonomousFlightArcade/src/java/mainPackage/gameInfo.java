@@ -33,6 +33,48 @@ public class gameInfo implements JsonObject{
 
 	}
 	
+	public void updateHealthPackages(JsonArray hPack) {
+		
+		System.out.println("Health packages: "+hPack);
+		
+		// create JsonArray
+		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+		
+		for (JsonValue h :  hPack) {
+			// create Point3D 
+			Point3D p = new Point3D(0.0,0.0,0.0);
+			
+			System.out.println("Health package: "+h);
+			
+			// string --> Point3D
+			p.toPoint3D(h.toString());
+			
+			// create JsonObject from Point3D
+			JsonObject obj = Json.createObjectBuilder()
+					.add("x", p.getX())
+					.add("y", p.getX())
+					.add("z", p.getX())
+					.build();
+		
+			// append to arrayBuilder
+			arrayBuilder.add(obj);
+		}
+		
+		this.healthPackages = arrayBuilder.build();
+		
+		
+	}
+	
+	public void updateAmmoPackages(JsonArray aPack) {
+		
+	}
+	
+
+	public void updateChargePackages(JsonArray cPack) {
+	
+	}
+
+	
 	@Override
 	public String toString() {
 		return "Game Info: drone1=" + drone1 + ", drone2=" + drone2;
