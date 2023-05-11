@@ -38,46 +38,71 @@ public class gameInfo implements JsonObject{
 		System.out.println("Health packages: "+hPack);
 		
 		// create JsonArray
-		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+		JsonArrayBuilder healthArrayBuilder = Json.createArrayBuilder();
 		
 		for (JsonValue h :  hPack) {
-			// create Point3D 
-			Point3D p = new Point3D(0.0,0.0,0.0);
-			
-			System.out.println("Health package: "+h);
-			
-			// string --> Point3D
-			p.toPoint3D(h.toString());
-			
-			// create JsonObject from Point3D
-			JsonObject obj = Json.createObjectBuilder()
-					.add("x", p.getX())
-					.add("y", p.getX())
-					.add("z", p.getX())
-					.build();
-		
-			// append to arrayBuilder
-			arrayBuilder.add(obj);
+			// tratar el paquete de munición y añadirlo a la lista
+			addPackage(healthArrayBuilder, h);
 		}
 		
-		this.healthPackages = arrayBuilder.build();
+		this.healthPackages = healthArrayBuilder.build();
 		
 		
 	}
+
+	public void addPackage(JsonArrayBuilder arrayBuilder, JsonValue jsonValue) {
+		Point3D p = new Point3D(0.0,0.0,0.0);
+		
+		System.out.println("Health package: "+jsonValue);
+		
+		// string --> Point3D
+		p.toPoint3D(jsonValue.toString());
+		
+		// create JsonObject from Point3D
+		JsonObject obj = Json.createObjectBuilder()
+				.add("x", p.getX())
+				.add("y", p.getY())
+				.add("z", p.getZ())
+				.build();
+
+		// append to arrayBuilder
+		arrayBuilder.add(obj);
+	}
 	
 	public void updateAmmoPackages(JsonArray aPack) {
+		
+		
+		// create JsonArray
+		JsonArrayBuilder ammoArrayBuilder = Json.createArrayBuilder();
+		
+		for (JsonValue a :  aPack) {
+			// tratar el paquete de munición y añadirlo a la lista
+			addPackage(ammoArrayBuilder, a);
+		}
+		
+		this.ammoPackages = ammoArrayBuilder.build();
 		
 	}
 	
 
 	public void updateChargePackages(JsonArray cPack) {
+		
+		// create JsonArray
+		JsonArrayBuilder chargeArrayBuilder = Json.createArrayBuilder();
+		
+		for (JsonValue c :  cPack) {
+			// tratar el paquete de munición y añadirlo a la lista
+			addPackage(chargeArrayBuilder, c);
+		}
+		
+		this.chargePackages = chargeArrayBuilder.build();
 	
 	}
 
 	
 	@Override
 	public String toString() {
-		return "Game Info: drone1=" + drone1 + ", drone2=" + drone2;
+		return "Game Info: drone1=" + drone1 + ", drone2=" + drone2+ " Health Packages: "+healthPackages + " Ammo Packages: "+ammoPackages + " Charge Packages: "+chargePackages;
 	}
 
 	
