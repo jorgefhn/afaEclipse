@@ -25,7 +25,12 @@ public class droneInfo implements JsonObject{
 	public JsonArray position;
 
 	
-	public void setPosition(Point3D point) {
+	public void setPosition(String pointString) {
+		
+		Point3D point = new Point3D(0.0,0.0,0.0);
+		point.toPoint3D(pointString);
+		
+		
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder()
     			.add(point.getX())
     			.add(point.getY())
@@ -35,14 +40,7 @@ public class droneInfo implements JsonObject{
 	
 	}
 	
-	public void init() {
-		
-		Point3D origin = new Point3D(0.0,0.0,0.0);
-		this.setPosition(origin); 
-
-
-		
-	}
+	
 	
 	public void setHealthLevel(JsonValue health) {
 
