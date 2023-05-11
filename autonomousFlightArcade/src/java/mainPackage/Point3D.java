@@ -37,7 +37,8 @@ public class Point3D {
 	public void toPoint3D(String vector){
 		// Function to cast a String input with the form (x,y,z) to Point3D.
 		
-		if (vector != null) 
+		if (vector != null && vector.matches("\\(\\d+\\.\\d+,\\s*\\d+\\.\\d+,\\s*\\d+\\.\\d+\\)"))
+ 
 		{
 		
 		System.out.println("Vector: "+vector);
@@ -46,9 +47,9 @@ public class Point3D {
 		
 		String input = vector.substring(1,vector.length()-1); // we eliminate the parenthesis
 		String[] coordinates = input.split(",");
-		this.x = Double.parseDouble(coordinates[0]);
-		this.y = Double.parseDouble(coordinates[1]);
-		this.z = Double.parseDouble(coordinates[2]);
+		this.x = Double.parseDouble(coordinates[0].trim());
+		this.y = Double.parseDouble(coordinates[1].trim());
+		this.z = Double.parseDouble(coordinates[2].trim());
 		}
 		
 		}
