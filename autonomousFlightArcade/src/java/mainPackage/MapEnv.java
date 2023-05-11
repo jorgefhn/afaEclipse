@@ -220,7 +220,7 @@ public class MapEnv extends Environment implements declareLiterals {
                     DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
                     mySocket.receive(peticion);
                     String mensaje = new String(peticion.getData(),0,peticion.getLength());
-                    
+                    System.out.println("Recibido: "+mensaje);
                     
                     updateFromUnity(mensaje);
 					updatePercepts();
@@ -277,6 +277,10 @@ public class MapEnv extends Environment implements declareLiterals {
 			game.drone2.setAmmoLevel(drone2.get("ammo"));
 			
 			// Health Packages, Ammo Packages, Charge Packages 
+			
+			game.updateHealthPackages(newLocations.getJsonArray("healthPackages"));
+			game.updateChargePackages(newLocations.getJsonArray("chargePackages"));
+			game.updateAmmoPackages(newLocations.getJsonArray("ammoPackages"));
 
 
 
