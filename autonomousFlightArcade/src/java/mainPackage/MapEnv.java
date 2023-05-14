@@ -15,9 +15,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import javax.json.Json;
 import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
 import java.io.StringReader;
@@ -225,7 +223,7 @@ public class MapEnv extends Environment implements declareLiterals {
 		// decide new position 
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
 			Point3D newPos = model.getNewPosition();
-			
+			destinies.setTarget(ag,newPos);
 			result = true;
 		}
 		
@@ -260,7 +258,8 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			
 		}
-
+		
+		
 
         if (action.getFunctor().equals("move_towards")) {
             try {
