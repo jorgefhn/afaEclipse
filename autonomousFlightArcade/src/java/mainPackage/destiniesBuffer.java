@@ -32,6 +32,11 @@ public class destiniesBuffer implements JsonObject{
 		}
 	
 	}
+	
+	@Override
+	public String toString() {
+		return pos1.toString()+ "?"+pos2.toString();
+	}
 
 	public ValueType getValueType() {
 		// TODO Auto-generated method stub
