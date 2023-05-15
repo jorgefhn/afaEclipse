@@ -1,4 +1,3 @@
-import java.io.StringReader;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -10,7 +9,6 @@ import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
-import javax.json.JsonNumber;
 
 
 
@@ -18,9 +16,11 @@ public class droneInfo implements JsonObject{
 	
 	// default values 
 
-	public int health = 100;
-	public int ammo = 100;
-	public int charge = 100;
+	public float health = 100f;
+	public float ammo = 100f;
+	public float charge = 100f;
+	public float speed = 20f; // by default
+	
 	
 	public JsonArray position;
 
@@ -44,26 +44,26 @@ public class droneInfo implements JsonObject{
 	
 	public void setHealthLevel(JsonValue health) {
 
-		int entero = Integer.parseInt(health.toString());
-		this.health = entero;
+		float salud = Float.parseFloat(health.toString());
+		this.health = salud;
 		
 	}
 	
 	public void setChargeLevel(JsonValue charge) {
-		int entero = Integer.parseInt(charge.toString());
-		this.charge = entero;
+		float carga = Float.parseFloat(charge.toString());
+		this.charge = carga;
 		
 	}
 	
 	public void setAmmoLevel(JsonValue ammo) {
-		int entero = Integer.parseInt(ammo.toString());
-		this.ammo = entero;
+		Float municion = Float.parseFloat(ammo.toString());
+		this.ammo = municion;
 		
 	}
 	
 	@Override
 	public String toString() {
-		return "Health: "+this.health + " Ammo: " + this.ammo + " Charge: " + this.charge;
+		return "Health: "+this.health + " Ammo: " + this.ammo + " Charge: " + this.charge + " Speed: "+this.speed;
 	}
 
 	
