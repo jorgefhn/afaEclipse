@@ -45,6 +45,13 @@ public class MapEnv extends Environment implements declareLiterals {
 				InetAddress host = InetAddress.getByName("127.0.0.1"); 
 				int port = 11000; 
 				
+				// lock 
+				
+				// send ACK 
+				
+				
+				// unlock 
+				
 				while ( true ) {
 					String destiniesString = destinies.toString();					
 					byte[] bytes = destiniesString.getBytes();	
@@ -84,11 +91,26 @@ public class MapEnv extends Environment implements declareLiterals {
 			DatagramSocket mySocket = null;
 
             try {
-                mySocket = new DatagramSocket(11004);
+            	
+            	// lock 
+            	
+                // Receive packets 
+            	mySocket = new DatagramSocket(11004);
                 byte[] buffer = new byte[1024];
+                
+                // First, receive packages info 
+                DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
+                mySocket.receive(peticion);
+                String packages = new String(peticion.getData(),0,peticion.getLength());
+                System.out.println("Paquetes recibidos: "+packages);
+                updatePackages(packages);
+                
+                // unlock 
+                
+                // Update drones info
                 while ( true ) {
 						
-                    DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
+                    peticion = new DatagramPacket(buffer,buffer.length);
                     mySocket.receive(peticion);
                     String mensaje = new String(peticion.getData(),0,peticion.getLength());
                     System.out.println("Recibido: "+mensaje);
@@ -110,6 +132,20 @@ public class MapEnv extends Environment implements declareLiterals {
             mySocket.close();    
 
         
+        }
+        
+        private void updatePackages(String packages) {
+			// method to update packages position at the start of each connection
+        	JsonReader jsonReader = Json.createReader(new StringReader(packages));
+			JsonObject newLocations= jsonReader.readObject();
+			jsonReader.close();
+			
+			// Health Packages, Ammo Packages, Charge Packages 
+			
+			game.updateHealthPackages(newLocations.getJsonArray("healthPackages"));
+			game.updateChargePackages(newLocations.getJsonArray("chargePackages"));
+			game.updateAmmoPackages(newLocations.getJsonArray("ammoPackages"));
+
         }
 
 		private void updateFromUnity(String mensaje) {
@@ -136,11 +172,7 @@ public class MapEnv extends Environment implements declareLiterals {
 			game.drone2.setChargeLevel(drone2.get("charge"));
 			game.drone2.setAmmoLevel(drone2.get("ammo"));
 			
-			// Health Packages, Ammo Packages, Charge Packages 
 			
-			game.updateHealthPackages(newLocations.getJsonArray("healthPackages"));
-			game.updateChargePackages(newLocations.getJsonArray("chargePackages"));
-			game.updateAmmoPackages(newLocations.getJsonArray("ammoPackages"));
 
     }
     }
@@ -169,8 +201,13 @@ public class MapEnv extends Environment implements declareLiterals {
     	
 
     			
+        // First, listener 
 		Receiver listener = new Receiver();
 		listener.start();
+		
+		// While not sentAck() pass
+		
+		// Iniciar sender 
 		 
 		Sender sender = new Sender();
 		sender.start();
@@ -187,6 +224,8 @@ public class MapEnv extends Environment implements declareLiterals {
     void updatePercepts() {
         // clear the percepts of the agents
         clearPercepts("drone1");
+        clearPercepts("drone2");
+        
         
         // drone1 and drone2 locations
         Point3D d1pos = arrayToPoint3D("drone1");
@@ -198,11 +237,15 @@ public class MapEnv extends Environment implements declareLiterals {
 		
 		System.out.println("Security distance: "+securityDistance);
 		
+		// Safezone
 		if (securityDistance > 50.0){ // if the security distance is over 50, safezone.
 			addPercept("drone1", sz1);	
 			addPercept("drone1", np1);	
+			
+			addPercept("drone2", sz2);	
+			addPercept("drone2", np2);	
 			System.out.println("distance > 50");
-					
+			
 		}
 		
 		// Aquí faltaría lo de los cargamentos para nhealth,nammo,ncharge
@@ -258,19 +301,7 @@ public class MapEnv extends Environment implements declareLiterals {
 			
 			
 		}
-		
-		
-
-        if (action.getFunctor().equals("move_towards")) {
-            try {
-                // result = model.moverHacia(ag,dest);
-				System.out.println("Moving towards in Unity");
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
+		 
           
         if (result) {
 
