@@ -18,10 +18,14 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 
+
 import java.io.StringReader;
 
 
 public class MapEnv extends Environment implements declareLiterals {
+	// Declare locks
+    public Boolean received = false; // by default
+    
 
 	gameInfo game = new gameInfo();
 	
@@ -45,19 +49,12 @@ public class MapEnv extends Environment implements declareLiterals {
 				InetAddress host = InetAddress.getByName("127.0.0.1"); 
 				int port = 11000; 
 				
-				// lock 
-				
-				// send ACK 
-				
-				
-				// unlock 
-				
 				while ( true ) {
 					String destiniesString = destinies.toString();					
 					byte[] bytes = destiniesString.getBytes();	
 					DatagramPacket packet = new DatagramPacket(bytes, destiniesString.length(),host,port); 
 					mySocket.send(packet);
-					TimeUnit.SECONDS.sleep(2);
+					Thread.sleep(2000);
 				}
 				
 				
@@ -92,25 +89,14 @@ public class MapEnv extends Environment implements declareLiterals {
 
             try {
             	
-            	// lock 
-            	
-                // Receive packets 
             	mySocket = new DatagramSocket(11004);
                 byte[] buffer = new byte[1024];
                 
-                // First, receive packages info 
-                DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
-                mySocket.receive(peticion);
-                String packages = new String(peticion.getData(),0,peticion.getLength());
-                System.out.println("Paquetes recibidos: "+packages);
-                updatePackages(packages);
-                
-                // unlock 
-                
+
                 // Update drones info
                 while ( true ) {
 						
-                    peticion = new DatagramPacket(buffer,buffer.length);
+                    DatagramPacket peticion = new DatagramPacket(buffer,buffer.length);
                     mySocket.receive(peticion);
                     String mensaje = new String(peticion.getData(),0,peticion.getLength());
                     System.out.println("Recibido: "+mensaje);
@@ -134,19 +120,6 @@ public class MapEnv extends Environment implements declareLiterals {
         
         }
         
-        private void updatePackages(String packages) {
-			// method to update packages position at the start of each connection
-        	JsonReader jsonReader = Json.createReader(new StringReader(packages));
-			JsonObject newLocations= jsonReader.readObject();
-			jsonReader.close();
-			
-			// Health Packages, Ammo Packages, Charge Packages 
-			
-			game.updateHealthPackages(newLocations.getJsonArray("healthPackages"));
-			game.updateChargePackages(newLocations.getJsonArray("chargePackages"));
-			game.updateAmmoPackages(newLocations.getJsonArray("ammoPackages"));
-
-        }
 
 		private void updateFromUnity(String mensaje) {
 			// method to update positions with a message received from Unity
@@ -171,6 +144,12 @@ public class MapEnv extends Environment implements declareLiterals {
 			game.drone2.setHealthLevel(drone2.get("health"));
 			game.drone2.setChargeLevel(drone2.get("charge"));
 			game.drone2.setAmmoLevel(drone2.get("ammo"));
+			
+
+			// packages
+			game.updateHealthPackages(newLocations.getJsonArray("healthPackages"));
+			game.updateChargePackages(newLocations.getJsonArray("chargePackages"));
+			game.updateAmmoPackages(newLocations.getJsonArray("ammoPackages"));
 			
 			
 
@@ -198,16 +177,16 @@ public class MapEnv extends Environment implements declareLiterals {
     	
     		
     	
-    	
-
-    			
+        
         // First, listener 
 		Receiver listener = new Receiver();
 		listener.start();
 		
-		// While not sentAck() pass
 		
-		// Iniciar sender 
+		while (!received) {
+			
+		}
+		
 		 
 		Sender sender = new Sender();
 		sender.start();
@@ -308,7 +287,7 @@ public class MapEnv extends Environment implements declareLiterals {
             updatePercepts();
 			informAgsEnvironmentChanged();
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (Exception e) {}
         }
         
