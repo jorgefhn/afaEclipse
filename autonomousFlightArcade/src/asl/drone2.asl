@@ -34,11 +34,3 @@
 	: safezone(drone2)
 	<- decide_position(drone2).
 	
-	
-// Esto es para ver si el dron se encuentra en una posición o no
-	
-+notat(drone2,P) : at(drone2,P) <- true.
-+notat(drone2,P) : not at(drone2,P)
-  <- move_towards(P);
-     not at(drone2,P).
-	 
