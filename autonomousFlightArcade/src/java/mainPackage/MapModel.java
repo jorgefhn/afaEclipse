@@ -19,13 +19,13 @@ public class MapModel {
 		
 	}
 	
-	Point3D getNewPosition(){
-		// método auxiliar para calcular un nuevo punto aleatorio
+	Point3D getNewPosition(Point3D position){
+		// método auxiliar para calcular un nuevo punto aleatorio en su zona
 		// genera una nueva posición aleatoria en un rango de 40, con coordenada z positiva 
 		Random rand = new Random();
-        double x = rand.nextDouble() * 80 - 40; // Rango [-40, 40]
-        double y = rand.nextDouble() * 80 - 40; // Rango [-40, 40]
-        double z = rand.nextDouble() * 40; // Rango [0, 40]
+        double x = position.getX() + (rand.nextDouble() * 80 - 40 ) + 10; // Rango [-40, 40]
+        double y = position.getX() + (rand.nextDouble() * 80 - 40) + 10; // Rango [-40, 40]
+        double z = position.getX() +(rand.nextDouble() * 80 - 40) + 10; // Rango [-40, 40]
 		
 		Point3D randomPoint = new Point3D(x,y,z); // este es el nuevo punto a devolver 
 		return randomPoint;
