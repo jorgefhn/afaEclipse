@@ -23,8 +23,6 @@ import java.io.StringReader;
 
 
 public class MapEnv extends Environment implements declareLiterals {
-	// Declare locks
-    public Boolean received = false; // by default
     
 
 	gameInfo game = new gameInfo();
@@ -182,11 +180,6 @@ public class MapEnv extends Environment implements declareLiterals {
 		Receiver listener = new Receiver();
 		listener.start();
 		
-		
-		while (!received) {
-			
-		}
-		
 		 
 		Sender sender = new Sender();
 		sender.start();
@@ -217,15 +210,17 @@ public class MapEnv extends Environment implements declareLiterals {
 		System.out.println("Security distance: "+securityDistance);
 		
 		// Safezone
-		if (securityDistance > 50.0){ // if the security distance is over 50, safezone.
+		if (securityDistance > 400.0){ // if the security distance is over 50, safezone.
 			addPercept("drone1", sz1);	
 			addPercept("drone1", np1);	
 			
 			addPercept("drone2", sz2);	
 			addPercept("drone2", np2);	
-			System.out.println("distance > 50");
+			System.out.println("distance > 400");
 			
 		}
+		
+		
 		
 		// Aquí faltaría lo de los cargamentos para nhealth,nammo,ncharge
 		System.out.println(consultPercepts("drone1"));
@@ -244,7 +239,18 @@ public class MapEnv extends Environment implements declareLiterals {
 		
 		// decide new position 
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
-			Point3D newPos = model.getNewPosition();
+			Point3D newPos = new Point3D(0.0,0.0,0.0);
+			 // drone1 and drone2 locations
+	        Point3D d1pos = arrayToPoint3D("drone1");
+	        Point3D d2pos = arrayToPoint3D("drone2");
+	        
+			if (ag == "drone1") {
+				newPos = model.getNewPosition(d1pos);
+			}
+			if (ag == "drone2") {
+				newPos = model.getNewPosition(d2pos);
+			}
+			
 			destinies.setTarget(ag,newPos);
 			result = true;
 		}
