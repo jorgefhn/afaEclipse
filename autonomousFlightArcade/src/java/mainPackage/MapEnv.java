@@ -4,6 +4,8 @@
 
 import jason.environment.Environment;
 import java.util.logging.Logger;
+
+import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -198,32 +200,67 @@ public class MapEnv extends Environment implements declareLiterals {
         clearPercepts("drone1");
         clearPercepts("drone2");
         
+        //Add percepts of charge, battery an ammo to both drones
+        String h1string = "health("+game.drone1.health+")";
+        String c1string = "charge("+game.drone1.charge+")";
+        String a1string = "ammo("+game.drone1.ammo+")";
+
+        String h2string = "health("+game.drone2.health+")";
+        String c2string = "charge("+game.drone2.charge+")";
+        String a2string = "ammo("+game.drone2.ammo+")";
+        
+    	Literal h1 = Literal.parseLiteral(h1string);
+    	Literal c1 = Literal.parseLiteral(c1string);
+    	Literal a1 = Literal.parseLiteral(a1string);
+    	
+     	Literal h2 = Literal.parseLiteral(h2string);
+    	Literal c2 = Literal.parseLiteral(c2string);
+    	Literal a2 = Literal.parseLiteral(a2string);
+
+
+       
+        addPercept("drone1",h1);
+        addPercept("drone1",c1);
+        addPercept("drone1",a1);
+        addPercept("drone2",h2);
+        addPercept("drone2",c2);
+        addPercept("drone2",a2);
+		
+     
+
+        
         
         // drone1 and drone2 locations
         Point3D d1pos = arrayToPoint3D("drone1");
         Point3D d2pos = arrayToPoint3D("drone2");
-
+        
 
         // After calculating the security distance, we will set a threshold of 50 to add a percept
 		double securityDistance = d1pos.distanceBetweenVectors(d2pos);
 		
-		System.out.println("Security distance: "+securityDistance);
 		
 		// Safezone
-		if (securityDistance > 400.0){ // if the security distance is over 50, safezone.
+		
+		if (securityDistance > 200.0){ // if the security distance is over 50, safezone.
 			addPercept("drone1", sz1);	
-			addPercept("drone1", np1);	
-			
 			addPercept("drone2", sz2);	
-			addPercept("drone2", np2);	
-			System.out.println("distance > 400");
 			
 		}
+		addPercept("drone1", np1);	
+		addPercept("drone2", np2);	
+		
+		
+		Point3D dest1 = model.getNewPosition("drone1", d1pos, d2pos);
+		Point3D dest2 = model.getNewPosition("drone2", d1pos, d2pos);
+		destinies.setTarget("drone1",dest1);
+		destinies.setTarget("drone2",dest2);
+
+
 		
 		
 		
 		// Aquí faltaría lo de los cargamentos para nhealth,nammo,ncharge
-		System.out.println(consultPercepts("drone1"));
+
 		  
     }
 
@@ -231,60 +268,45 @@ public class MapEnv extends Environment implements declareLiterals {
     @Override
     public boolean executeAction(String ag, Structure action ) {
     	
+    	System.out.println("["+ag+"] doing "+action);
+    	// drone1 and drone2 locations
+        Point3D d1pos = arrayToPoint3D("drone1");
+        Point3D d2pos = arrayToPoint3D("drone2");
     	
     	boolean result = true;
     	
-        System.out.println("["+ag+"] doing: "+action);	
-		System.out.println(action.getFunctor());
+    	 System.out.println(consultPercepts("drone1"));
 		
 		// decide new position 
 		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
-			Point3D newPos = new Point3D(0.0,0.0,0.0);
-			 // drone1 and drone2 locations
-	        Point3D d1pos = arrayToPoint3D("drone1");
-	        Point3D d2pos = arrayToPoint3D("drone2");
-	        
-			if (ag == "drone1") {
-				newPos = model.getNewPosition(d1pos);
-			}
-			if (ag == "drone2") {
-				newPos = model.getNewPosition(d2pos);
-			}
-			
-			destinies.setTarget(ag,newPos);
+			Point3D dest = model.getNewPosition(ag, d1pos, d2pos);
+			destinies.setTarget(ag,dest);
 			result = true;
 		}
 		
+		if (action.getFunctor().equals("findhealth") && game.healthPackages != null){ // aunque podríamos encapsular esto dentro de decide new position 
+			Point3D dest = model.getPackagePos(game.healthPackages);
+			destinies.setTarget(ag,dest);
+			result = true;
+		}
+		
+		if (action.getFunctor().equals("findammo") && game.ammoPackages != null){ // aunque podríamos encapsular esto dentro de decide new position 
+			Point3D dest = model.getPackagePos(game.ammoPackages);
+			destinies.setTarget(ag,dest);
+			result = true;
+		}
+		
+		if (action.getFunctor().equals("findbat") && game.chargePackages != null){ // aunque podríamos encapsular esto dentro de decide new position 
+			Point3D dest = model.getPackagePos(game.chargePackages);
+			destinies.setTarget(ag,dest);
+			result = true;
+		}
+		
+		
 		// flee from the other drone
 		if (action.getFunctor().equals("flee")) {
-			// aquí es donde se le envía a Unity el plan para que se mueva
-			
-			Point3D currentPos = null;
-			Point3D fleeFrom = null;
-
-			
-			if (ag.equals("drone1")){ // tiene que huir del dron2
-				currentPos = arrayToPoint3D("drone1");
-				fleeFrom = arrayToPoint3D("drone2");
-				Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
-				destinies.setTarget("drone1", newPos);
- 			}
-			
-			if (ag.equals("drone2")){ // tiene que huir del dron2
-				currentPos = arrayToPoint3D("drone2");
-				fleeFrom = arrayToPoint3D("drone1");
-				Point3D newPos = model.getSafePosition(currentPos,fleeFrom);
-				destinies.setTarget("drone1", newPos);
-			}
-			
-			
-			
-			System.out.println("New drone destinies: "+destinies);
-			
-			result = true;
-			
-			
-			
+			destinies.setTarget(ag, model.getSafePosition(ag));			
+			result = true;			
 		}
 		 
           
