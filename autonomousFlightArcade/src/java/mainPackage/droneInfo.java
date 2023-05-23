@@ -16,10 +16,9 @@ public class droneInfo implements JsonObject{
 	
 	// default values 
 
-	public float health = 100f;
-	public float ammo = 100f;
-	public float charge = 100f;
-	public float speed = 20f; // by default
+	public float health = 0f;
+	public float ammo = 0f;
+	public float charge = 0.1f;
 	
 	
 	public JsonArray position;
@@ -63,7 +62,7 @@ public class droneInfo implements JsonObject{
 	
 	@Override
 	public String toString() {
-		return "Health: "+this.health + " Ammo: " + this.ammo + " Charge: " + this.charge + " Speed: "+this.speed;
+		return "Health: "+this.health + " Ammo: " + this.ammo + " Charge: " + this.charge;
 	}
 
 	
