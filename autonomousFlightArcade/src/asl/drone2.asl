@@ -1,5 +1,5 @@
 /* Initial beliefs and rules */
-
+safezone(drone2).
 /* Plans */
 	
 /* El dron quiere calcular la nueva posición. Lo hará en base a varias prioridades:
@@ -16,21 +16,22 @@
 
 // 2.1) no tiene batería, va a por ella
 +new_position(drone2)
-	: safezone(drone2)& needs_charge(drone2)
-	<- move_towards(drone2,charge). 
+	: safezone(drone2)& charge(0)
+	<- findbat(drone2).
 
 // 2.2) no tiene salud, va a por ella
 +new_position(drone2)
-	: safezone(drone2)& needs_health(drone2)
-	<- move_towards(drone2,health). 	
+	: safezone(drone2)& health(20)
+	<- findhealth(drone2).
 
 // 2.3) no tiene munición, va a por ella
 +new_position(drone2)
-	: safezone(drone2)& needs_ammo(drone2)
-	<- move_towards(drone2,ammo). 		
+	: safezone(drone2)& ammo(0)
+	<- findammo(drone2).
 
 // 3) está en la zona segura y tiene los niveles cubiertos, calcula posición
 +new_position(drone2)
 	: safezone(drone2)
 	<- decide_position(drone2).
 	
+
