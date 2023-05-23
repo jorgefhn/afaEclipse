@@ -22,20 +22,14 @@ public class gameInfo implements JsonObject{
 	
 	public void init() {
 		
-		System.out.println("Game info init");
 		// drone init
 		this.drone1 = new droneInfo();
 		this.drone2 = new droneInfo();
-		
-		// packages init
-		
-
 
 	}
 	
 	public void updateHealthPackages(JsonArray hPack) {
 		
-		System.out.println("Health packages: "+hPack);
 		
 		// create JsonArray
 		JsonArrayBuilder healthArrayBuilder = Json.createArrayBuilder();
@@ -53,7 +47,6 @@ public class gameInfo implements JsonObject{
 	public void addPackage(JsonArrayBuilder arrayBuilder, JsonValue jsonValue) {
 		Point3D p = new Point3D(0.0,0.0,0.0);
 		
-		System.out.println("Health package: "+jsonValue);
 		
 		// string --> Point3D
 		p.toPoint3D(jsonValue.toString());
@@ -75,7 +68,7 @@ public class gameInfo implements JsonObject{
 		// create JsonArray
 		JsonArrayBuilder ammoArrayBuilder = Json.createArrayBuilder();
 		
-		for (JsonValue a :  aPack) {
+		for (JsonValue a : aPack) {
 			// tratar el paquete de munición y añadirlo a la lista
 			addPackage(ammoArrayBuilder, a);
 		}
