@@ -30,7 +30,7 @@ public class MapEnv extends Environment implements declareLiterals {
 	gameInfo game = new gameInfo();
 	
 	// destinies 
-	destiniesBuffer destinies = new destiniesBuffer();
+	public destiniesBuffer destinies = new destiniesBuffer();
 	
 	
 	static Logger logger = Logger.getLogger(MapEnv.class.getName());
@@ -50,11 +50,12 @@ public class MapEnv extends Environment implements declareLiterals {
 				int port = 11000; 
 				
 				while ( true ) {
-					String destiniesString = destinies.toString();					
+					String destiniesString = destinies.toString();		
+					System.out.println("I am going to send: "+destiniesString);
 					byte[] bytes = destiniesString.getBytes();	
 					DatagramPacket packet = new DatagramPacket(bytes, destiniesString.length(),host,port); 
 					mySocket.send(packet);
-					Thread.sleep(2000);
+					Thread.sleep(1000);
 				}
 				
 				
@@ -78,8 +79,8 @@ public class MapEnv extends Environment implements declareLiterals {
 	}
 	
 
-    public class Receiver extends Thread{
-    	// Receiver method: it periodically receives a JSON with all the information 
+    public class Listener extends Thread{
+    	// Listener method: it periodically receives a JSON with all the information 
 	
 		
         @Override
@@ -103,7 +104,7 @@ public class MapEnv extends Environment implements declareLiterals {
                     
                     updateFromUnity(mensaje);
 					updatePercepts();
-					TimeUnit.SECONDS.sleep(2);
+	                Thread.sleep(1000);
 
                 }
                 
@@ -176,19 +177,18 @@ public class MapEnv extends Environment implements declareLiterals {
         destinies.setTarget("drone2",arrayToPoint3D("drone1"));
     	
     		
-    	
+        model = new MapModel();
         
         // First, listener 
-		Receiver listener = new Receiver();
+		Listener listener = new Listener();
 		listener.start();
 		
 		 
 		Sender sender = new Sender();
 		sender.start();
 
-        model = new MapModel();
+        
 
-        updatePercepts();
 
     }
 
@@ -229,7 +229,7 @@ public class MapEnv extends Environment implements declareLiterals {
      
 
         
-        
+   
         // drone1 and drone2 locations
         Point3D d1pos = arrayToPoint3D("drone1");
         Point3D d2pos = arrayToPoint3D("drone2");
@@ -237,29 +237,26 @@ public class MapEnv extends Environment implements declareLiterals {
 
         // After calculating the security distance, we will set a threshold of 50 to add a percept
 		double securityDistance = d1pos.distanceBetweenVectors(d2pos);
-		
+		System.out.println("Security distance: "+securityDistance);
 		
 		// Safezone
 		
-		if (securityDistance > 200.0){ // if the security distance is over 50, safezone.
+		if (securityDistance > 200.0){ // if the security distance is over 200, safezone.
 			addPercept("drone1", sz1);	
 			addPercept("drone2", sz2);	
 			
+		} else {
+			addPercept("drone1", nsz1);	
+			addPercept("drone2", nsz2);	
+
 		}
-		addPercept("drone1", np1);	
-		addPercept("drone2", np2);	
 		
-		
-		Point3D dest1 = model.getNewPosition("drone1", d1pos, d2pos);
-		Point3D dest2 = model.getNewPosition("drone2", d1pos, d2pos);
-		destinies.setTarget("drone1",dest1);
-		destinies.setTarget("drone2",dest2);
 
+		System.out.println("[drone1]: "+consultPercepts("drone1"));
+		System.out.println("[drone2]: "+consultPercepts("drone2"));
 
 		
 		
-		
-		// Aquí faltaría lo de los cargamentos para nhealth,nammo,ncharge
 
 		  
     }
@@ -272,18 +269,41 @@ public class MapEnv extends Environment implements declareLiterals {
     	// drone1 and drone2 locations
         Point3D d1pos = arrayToPoint3D("drone1");
         Point3D d2pos = arrayToPoint3D("drone2");
+        
+        
     	
-    	boolean result = true;
+    	boolean result = false;
     	
-    	 System.out.println(consultPercepts("drone1"));
 		
-		// decide new position 
-		if (action.getFunctor().equals("decide_position")){ // aunque podríamos encapsular esto dentro de decide new position 
-			Point3D dest = model.getNewPosition(ag, d1pos, d2pos);
-			destinies.setTarget(ag,dest);
+		
+		if (action.getFunctor().equals("move_towards"))
+		{
+			Point3D dest1 = model.target(d2pos);
+			Point3D dest2 = model.target(d1pos);
+			destinies.setTarget("drone1", dest1);		
+			destinies.setTarget("drone2", dest2);	
 			result = true;
 		}
 		
+
+		// flee from the other drone
+		if (action.getFunctor().equals("flee")) {
+			Point3D dest1 = model.getSafePositiond1();
+			Point3D dest2 = model.getSafePositiond2();
+
+			destinies.setTarget("drone1", dest1);		
+			destinies.setTarget("drone2", dest2);					
+
+			result = true;			
+		}
+		
+		System.out.println("Destinies: "+destinies+ "\n");
+
+		 
+		
+		
+		
+		/*
 		if (action.getFunctor().equals("findhealth") && game.healthPackages != null){ // aunque podríamos encapsular esto dentro de decide new position 
 			Point3D dest = model.getPackagePos(game.healthPackages);
 			destinies.setTarget(ag,dest);
@@ -301,21 +321,16 @@ public class MapEnv extends Environment implements declareLiterals {
 			destinies.setTarget(ag,dest);
 			result = true;
 		}
+		*/
 		
 		
-		// flee from the other drone
-		if (action.getFunctor().equals("flee")) {
-			destinies.setTarget(ag, model.getSafePosition(ag));			
-			result = true;			
-		}
-		 
           
         if (result) {
 
             updatePercepts();
 			informAgsEnvironmentChanged();
             try {
-                Thread.sleep(1000);
+                Thread.sleep(200);
             } catch (Exception e) {}
         }
         
