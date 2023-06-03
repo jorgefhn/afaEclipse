@@ -7,12 +7,22 @@ safezone(drone1).
 2) tiene sus barras de carga, salud y munición vacías
 3) está perfecto y va a calcular una nueva posición */
 
-// 1) el dron no se encuentra en la zona segura, tiene que huir 
-+new_position(drone1)
-	: not safezone(drone1)
-	<- flee(drone1).
+// Drone in safezone: move_towards drone1
++safezone(drone1) 
+	: not health(0) & not charge(0)
+	<- move_towards(drone2);
+	?safezone(drone1).
 	
-// Resto de casos: el dron está en la zona segura
+	
++not_safezone(drone1)
+	: not health(0) & not charge(0)
+	<- flee(drone1);
+	?not_safezone(drone1).
+	
+
+
+
+/*Resto de casos: el dron está en la zona segura
 
 // 2.1) no tiene batería, va a por ella
 +new_position(drone1)
@@ -28,10 +38,7 @@ safezone(drone1).
 +new_position(drone1)
 	: safezone(drone1)& ammo(0)
 	<- findammo(drone1).
+*/
 
-// 3) está en la zona segura y tiene los niveles cubiertos, calcula posición
-+new_position(drone1)
-	: safezone(drone1)
-	<- decide_position(drone1).
 	
 
